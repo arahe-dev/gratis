@@ -63,7 +63,7 @@ export function WaitlistForm({ onClose }: WaitlistFormProps) {
     return (
       <div className="py-8 text-center">
         <p className="text-lg font-medium text-foreground">Registered.</p>
-        <p className="mt-2 text-sm text-muted">{message}</p>
+        <p className="mt-2 text-sm text-muted" role="status">{message}</p>
         <div className="mt-6 flex flex-col gap-3">
           <Button href="mailto:usegratiscode@protonmail.com?subject=GratisCode%20closed%20access%20request">
             Open email fallback
@@ -77,10 +77,8 @@ export function WaitlistForm({ onClose }: WaitlistFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="hidden" aria-hidden="true">
-        <input type="text" name="website" tabIndex={-1} autoComplete="off" />
-      </div>
+    <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+      <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="hidden" />
 
       <div>
         <Label htmlFor="w-name">Name</Label>
@@ -142,7 +140,7 @@ export function WaitlistForm({ onClose }: WaitlistFormProps) {
       <FieldError message={errors.consent} />
 
       {status === "error" && (
-        <p className="rounded bg-red-950/30 px-3 py-2 text-xs text-red-300">{message}</p>
+        <p role="status" className="rounded bg-red-950/30 px-3 py-2 text-xs text-red-300">{message}</p>
       )}
 
       <Button type="submit" className="w-full" disabled={status === "loading"}>
@@ -162,5 +160,3 @@ export function WaitlistForm({ onClose }: WaitlistFormProps) {
     </form>
   );
 }
-
-

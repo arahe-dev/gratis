@@ -1,8 +1,3 @@
-// GratisCode — Prisma schema
-// PostgreSQL is used for production (Vercel Postgres, Neon, Supabase, etc.).
-// Set DATABASE_URL to a Postgres connection string, e.g.:
-// postgresql://user:password@host:5432/db?sslmode=require
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -12,30 +7,47 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum BuilderType {
+  student
+  indie_builder
+  early_career_developer
+  open_source_contributor
+  hackathon_team
+  other
+}
+
+enum SponsorBudgetRange {
+  inr_1000
+  inr_5000
+  inr_25000
+  inr_75000_plus
+  custom
+}
+
 model WaitlistSignup {
-  id                 String   @id @default(uuid())
-  name               String
-  email              String   @unique
-  city               String?
-  type               String
-  currentTool        String?
-  whyInterested      String?
-  consentAt          DateTime
-  createdAt          DateTime @default(now())
-  source             String?
-  ipHash             String?
+  id             String      @id @default(uuid())
+  name           String
+  email          String      @unique
+  city           String?
+  type           BuilderType
+  currentTool    String?
+  whyInterested  String?
+  consentAt      DateTime
+  createdAt      DateTime    @default(now())
+  source         String?
+  ipHash         String?
 }
 
 model SponsorLead {
-  id             String   @id @default(uuid())
+  id             String             @id @default(uuid())
   name           String
   email          String
   company        String
-  budgetRange    String
+  budgetRange    SponsorBudgetRange
   targetAudience String?
   message        String?
   consentAt      DateTime
-  createdAt      DateTime @default(now())
+  createdAt      DateTime           @default(now())
   source         String?
   ipHash         String?
 }

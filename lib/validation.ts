@@ -1,15 +1,13 @@
 import { z } from "zod";
 
 const typeEnum = [
-  "student",
-  "indie_builder",
-  "early_career_developer",
-  "open_source_contributor",
-  "hackathon_team",
-  "other",
+  "student", "indie_builder", "early_career_developer",
+  "open_source_contributor", "hackathon_team", "other",
 ] as const;
 
-const budgetEnum = ["₹1000", "₹5000", "₹25000", "₹75000+", "custom"] as const;
+const budgetEnum = [
+  "inr_1000", "inr_5000", "inr_25000", "inr_75000_plus", "custom",
+] as const;
 
 export const waitlistSchema = z.object({
   name: z.string().min(1, "Name is required").max(100, "Name is too long"),
@@ -19,8 +17,7 @@ export const waitlistSchema = z.object({
   currentTool: z.string().max(200).optional().or(z.literal("")),
   whyInterested: z.string().max(1000).optional().or(z.literal("")),
   consent: z.literal("true", { message: "You must agree to be contacted" }),
-  // Honeypot field: must be empty. Bots often fill hidden fields.
-  website: z.string().max(0).optional(),
+  website: z.literal("").or(z.undefined()).optional(),
 });
 
 export const sponsorSchema = z.object({
@@ -31,7 +28,7 @@ export const sponsorSchema = z.object({
   targetAudience: z.string().max(500).optional().or(z.literal("")),
   message: z.string().max(2000).optional().or(z.literal("")),
   consent: z.literal("true", { message: "You must agree to be contacted" }),
-  website: z.string().max(0).optional(),
+  website: z.literal("").or(z.undefined()).optional(),
 });
 
 export type WaitlistInput = z.infer<typeof waitlistSchema>;

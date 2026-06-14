@@ -1,15 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { waitlistSchema } from "@/lib/validation";
-import { checkRateLimit } from "@/lib/rate-limit";
+import { waitlistRateLimit } from "@/lib/rate-limit";
 import { getClientIp, hashIp } from "@/lib/security";
+import { isUniqueConstraintError } from "@/lib/db-errors";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    // Honeypot check: if filled, silently reject without revealing it's a honeypot.
-    if (body.website && String(body.website).length > 0) {
+    if (!Object.prototype.hasOwnProperty.call(body, "website")) {
+      return NextResponse.json({ error: "Invalid submission." }, { status: 400 });
+    }
+
+    if (String(body.website).trim().length > 0) {
       return NextResponse.json({ success: true }, { status: 200 });
     }
 
@@ -25,23 +29,15 @@ export async function POST(request: NextRequest) {
 
     const ip = await getClientIp();
     const ipHash = hashIp(ip);
-    const emailKey = `waitlist:email:${parsed.data.email.toLowerCase()}`;
-    const ipKey = `waitlist:ip:${ipHash}`;
 
-    const emailLimit = checkRateLimit(emailKey);
-    if (!emailLimit.allowed) {
-      return NextResponse.json(
-        { message: "Too many submissions from this email. Please try again later." },
-        { status: 429 }
-      );
-    }
-
-    const ipLimit = checkRateLimit(ipKey);
-    if (!ipLimit.allowed) {
-      return NextResponse.json(
-        { message: "Too many submissions from this network. Please try again later." },
-        { status: 429 }
-      );
+    if (ipHash) {
+      const { success } = await waitlistRateLimit.limit(ipHash);
+      if (!success) {
+        return NextResponse.json(
+          { message: "Too many requests. Please try again later." },
+          { status: 429 }
+        );
+      }
     }
 
     await prisma.waitlistSignup.create({
@@ -60,16 +56,12 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true }, { status: 201 });
   } catch (error) {
-    // Safe logging: no raw UA, no full IP, no stack traces to user.
     console.error("Waitlist error:", {
       time: new Date().toISOString(),
       type: error instanceof Error ? error.name : "unknown",
     });
 
-    if (
-      error instanceof Error &&
-      error.message.includes("Unique constraint")
-    ) {
+    if (isUniqueConstraintError(error)) {
       return NextResponse.json(
         { message: "This email is already on the waitlist." },
         { status: 409 }

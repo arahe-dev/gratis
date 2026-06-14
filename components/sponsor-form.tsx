@@ -63,7 +63,7 @@ export function SponsorForm({ onClose }: SponsorFormProps) {
     return (
       <div className="py-8 text-center">
         <p className="text-lg font-medium text-foreground">Interest recorded.</p>
-        <p className="mt-2 text-sm text-muted">{message}</p>
+        <p className="mt-2 text-sm text-muted" role="status">{message}</p>
         <div className="mt-6 flex flex-col gap-3">
           <Button href="mailto:usegratiscode@protonmail.com?subject=Sponsor%20GratisCode%20developer%20compute">
             Open email fallback
@@ -77,10 +77,8 @@ export function SponsorForm({ onClose }: SponsorFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="hidden" aria-hidden="true">
-        <input type="text" name="website" tabIndex={-1} autoComplete="off" />
-      </div>
+    <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+      <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="hidden" />
 
       <div>
         <Label htmlFor="s-name">Name</Label>
@@ -104,10 +102,10 @@ export function SponsorForm({ onClose }: SponsorFormProps) {
         <Label htmlFor="s-budget">Sponsor budget range</Label>
         <Select id="s-budget" name="budgetRange" required>
           <option value="">Select one</option>
-          <option value="₹1000">₹1000</option>
-          <option value="₹5000">₹5000</option>
-          <option value="₹25000">₹25000</option>
-          <option value="₹75000+">₹75000+</option>
+          <option value="inr_1000">₹1000</option>
+          <option value="inr_5000">₹5000</option>
+          <option value="inr_25000">₹25000</option>
+          <option value="inr_75000_plus">₹75000+</option>
           <option value="custom">Custom</option>
         </Select>
         <FieldError message={errors.budgetRange} />
@@ -141,7 +139,7 @@ export function SponsorForm({ onClose }: SponsorFormProps) {
       <FieldError message={errors.consent} />
 
       {status === "error" && (
-        <p className="rounded bg-red-950/30 px-3 py-2 text-xs text-red-300">{message}</p>
+        <p role="status" className="rounded bg-red-950/30 px-3 py-2 text-xs text-red-300">{message}</p>
       )}
 
       <Button type="submit" className="w-full" disabled={status === "loading"}>
@@ -161,4 +159,3 @@ export function SponsorForm({ onClose }: SponsorFormProps) {
     </form>
   );
 }
-

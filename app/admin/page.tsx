@@ -30,7 +30,6 @@ export default function AdminPage() {
   return (
     <>
       <SiteHeader />
-
       <main className="flex-1">
         <div className="mx-auto max-w-[1100px] px-6 py-16 sm:py-24">
           <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Admin</h1>
@@ -38,14 +37,9 @@ export default function AdminPage() {
 
           {!data?.success && (
             <form onSubmit={submit} className="mt-8 max-w-sm space-y-4">
-              <Input
-                type="password"
-                placeholder="Admin password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-              {error && <p className="text-xs text-red-400">{error}</p>}
+              <Input type="password" placeholder="Admin password" value={password}
+                onChange={(e) => setPassword(e.target.value)} required />
+              {error && <p className="text-xs text-red-400" role="status">{error}</p>}
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? "Checking..." : "View dashboard"}
               </Button>
@@ -124,7 +118,6 @@ export default function AdminPage() {
           )}
         </div>
       </main>
-
       <Footer />
     </>
   );

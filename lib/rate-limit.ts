@@ -1,42 +1,62 @@
-/**
- * Simple in-memory rate limiter.
- * In production, swap this for Redis (e.g., Upstash Redis).
- *
- * Limits are keyed by hashed IP and by email address.
- */
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
 
-export interface RateLimitEntry {
-  count: number;
-  resetAt: number;
+const url = process.env.UPSTASH_REDIS_REST_URL;
+const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+interface RateLimitResult {
+  success: boolean;
 }
 
-const store = new Map<string, RateLimitEntry>();
+function createDevRatelimit(): { limit: (key: string) => Promise<RateLimitResult> } {
+  const store = new Map<string, { count: number; resetAt: number }>();
+  const WINDOW_MS = 10 * 60 * 1000;
+  const MAX = 5;
 
-const WINDOW_MS = 60 * 60 * 1000; // 1 hour
-const MAX_REQUESTS_PER_KEY = 5; // submissions per window per key
-
-function now() {
-  return Date.now();
+  return {
+    async limit(key: string): Promise<RateLimitResult> {
+      const now = Date.now();
+      const entry = store.get(key);
+      if (!entry || entry.resetAt < now) {
+        store.set(key, { count: 1, resetAt: now + WINDOW_MS });
+        return { success: true };
+      }
+      if (entry.count >= MAX) {
+        return { success: false };
+      }
+      entry.count += 1;
+      return { success: true };
+    },
+  };
 }
 
-function getEntry(key: string): RateLimitEntry {
-  const existing = store.get(key);
-  if (!existing || existing.resetAt < now()) {
-    const fresh: RateLimitEntry = { count: 0, resetAt: now() + WINDOW_MS };
-    store.set(key, fresh);
-    return fresh;
+function createRatelimit(prefix: string): { limit: (key: string) => Promise<RateLimitResult> } {
+  if (!url || !token) {
+    if (process.env.NODE_ENV === "production") {
+      return {
+        async limit(): Promise<RateLimitResult> {
+          throw new Error("Missing UPSTASH_REDIS_REST_URL or UPSTASH_REDIS_REST_TOKEN. Rate limiting requires Upstash Redis in production.");
+        },
+      };
+    }
+    return createDevRatelimit();
   }
-  return existing;
+
+  const redis = new Redis({ url, token });
+  const ratelimit = new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(5, "10 m"),
+    analytics: false,
+    prefix,
+  });
+
+  return {
+    async limit(key: string): Promise<RateLimitResult> {
+      const { success } = await ratelimit.limit(key);
+      return { success };
+    },
+  };
 }
 
-export function checkRateLimit(key: string): { allowed: boolean; retryAfterSeconds: number } {
-  const entry = getEntry(key);
-  if (entry.count >= MAX_REQUESTS_PER_KEY) {
-    return {
-      allowed: false,
-      retryAfterSeconds: Math.max(0, Math.ceil((entry.resetAt - now()) / 1000)),
-    };
-  }
-  entry.count += 1;
-  return { allowed: true, retryAfterSeconds: 0 };
-}
+export const waitlistRateLimit = createRatelimit("gratiscode:waitlist");
+export const sponsorRateLimit = createRatelimit("gratiscode:sponsor");
