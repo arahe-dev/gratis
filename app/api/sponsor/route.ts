@@ -26,7 +26,10 @@ export async function POST(request: NextRequest) {
       const fieldErrors: Record<string, string> = {};
       for (const issue of parsed.error.issues) {
         const key = issue.path[0] as string;
-        if (!fieldErrors[key]) fieldErrors[key] = issue.message;
+        if (typeof key === "string" && !fieldErrors[key]) fieldErrors[key] = issue.message;
+      }
+      if (Object.keys(fieldErrors).length === 0) {
+        return NextResponse.json({ error: "Invalid submission." }, { status: 400 });
       }
       return NextResponse.json({ message: "Please check the form.", fieldErrors }, { status: 400 });
     }

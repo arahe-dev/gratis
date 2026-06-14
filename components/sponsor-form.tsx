@@ -7,6 +7,7 @@ import { Select } from "./ui/select";
 import { Textarea } from "./ui/textarea";
 import { Label } from "./ui/label";
 import { FieldError } from "./ui/field-error";
+import Link from "next/link";
 
 interface SponsorFormProps {
   onClose: () => void;
@@ -133,7 +134,11 @@ export function SponsorForm({ onClose }: SponsorFormProps) {
           className="mt-1 h-4 w-4 rounded border-border bg-card text-foreground"
         />
         <label htmlFor="s-consent" className="text-xs leading-5 text-muted">
-          I agree to be contacted about sponsoring GratisCode developer compute.
+          I agree to be contacted about sponsoring GratisCode developer compute under the{" "}
+          <Link href="/privacy" className="underline underline-offset-4 hover:text-foreground">
+            privacy policy
+          </Link>
+          .
         </label>
       </div>
       <FieldError message={errors.consent} />

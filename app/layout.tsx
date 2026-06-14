@@ -14,6 +14,13 @@ export const metadata: Metadata = {
   keywords: ["AI coding", "free", "India", "developers", "students", "DeepSeek", "waitlist"],
   authors: [{ name: "GratisCode" }],
   metadataBase: new URL("https://gratiscode.in"),
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "256x256", type: "image/x-icon" },
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+    apple: [{ url: "/brand/logo-mark.svg" }],
+  },
   openGraph: {
     title: "GratisCode — Premium AI coding models, free for Indian builders",
     description:

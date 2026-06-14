@@ -18,7 +18,7 @@ export const waitlistSchema = z.object({
   whyInterested: z.string().max(1000).optional().or(z.literal("")),
   consent: z.literal("true", { message: "You must agree to be contacted" }),
   website: z.literal("").or(z.undefined()).optional(),
-});
+}).strict();
 
 export const sponsorSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
@@ -29,7 +29,7 @@ export const sponsorSchema = z.object({
   message: z.string().max(2000).optional().or(z.literal("")),
   consent: z.literal("true", { message: "You must agree to be contacted" }),
   website: z.literal("").or(z.undefined()).optional(),
-});
+}).strict();
 
 export type WaitlistInput = z.infer<typeof waitlistSchema>;
 export type SponsorInput = z.infer<typeof sponsorSchema>;

@@ -7,6 +7,7 @@ import { Select } from "./ui/select";
 import { Textarea } from "./ui/textarea";
 import { Label } from "./ui/label";
 import { FieldError } from "./ui/field-error";
+import Link from "next/link";
 
 interface WaitlistFormProps {
   onClose: () => void;
@@ -134,7 +135,11 @@ export function WaitlistForm({ onClose }: WaitlistFormProps) {
           className="mt-1 h-4 w-4 rounded border-border bg-card text-foreground"
         />
         <label htmlFor="w-consent" className="text-xs leading-5 text-muted">
-          I understand GratisCode is pre-launch, usage is not guaranteed, and I agree to be contacted about closed access.
+          I understand GratisCode is pre-launch, usage is not guaranteed, and I agree to be contacted about closed access under the{" "}
+          <Link href="/privacy" className="underline underline-offset-4 hover:text-foreground">
+            privacy policy
+          </Link>
+          .
         </label>
       </div>
       <FieldError message={errors.consent} />
