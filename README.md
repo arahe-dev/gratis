@@ -29,8 +29,7 @@ Set:
 - `DATABASE_URL` — pooled production PostgreSQL connection string suitable for Vercel/serverless (PgBouncer/provider pooler/Prisma Accelerate)
 - `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` — required for production submissions
 - `IP_HASH_SALT` — long random string for hashing IPs; required in production
-- `ENABLE_ADMIN` — leave unset/false for production
-- `ALLOW_UNSAFE_ADMIN` — ignored in production; admin is dev-only until real auth exists
+- `ENABLE_ADMIN` — optional for local/dev only; production admin always returns 404
 
 Run the database migration:
 
@@ -113,13 +112,13 @@ This is an estimate, not a guarantee. Actual coverage depends on model prices, t
 1. Provision a Postgres database.
 2. Update `DATABASE_URL` and `provider = "postgresql"`.
 3. Run `prisma migrate deploy` at build/start time.
-4. Set `IP_HASH_SALT` and `ADMIN_PASSWORD`.
-5. Keep `/admin` disabled or protected in production.
+4. Set `IP_HASH_SALT`.
+5. Keep `/admin` disabled; production admin always returns 404.
 
 ### General
 
 - [ ] Use a strong `IP_HASH_SALT`.
-- [ ] Keep `ENABLE_ADMIN` unset/false; production admin returns 404 regardless.
+- [ ] Keep `ENABLE_ADMIN` unset/false in production; production admin returns 404 regardless.
 - [ ] Configure Upstash Redis; production submissions fail closed without it.
 - [ ] Keep dependencies updated.
 - [ ] Review CSP and security headers before going live.

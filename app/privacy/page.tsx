@@ -41,7 +41,7 @@ export default function PrivacyPage() {
               <li>We do not show sponsors your private code.</li>
               <li>Private code and prompts are not used for training without explicit opt-in consent.</li>
               <li>Sponsors do not receive private prompts, repos, files, generated outputs, or code.</li>
-              <li>Minimal operational data may be stored for abuse prevention, waitlist management, analytics, security, and service improvement.</li>
+              <li>Minimal operational data may be stored for abuse prevention, waitlist management, security, and service improvement.</li>
             </ul>
           </section>
 

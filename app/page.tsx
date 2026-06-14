@@ -105,7 +105,7 @@ export default function Home() {
               "We do not show sponsors your private code.",
               "Private code and prompts are not used for training without explicit opt-in consent.",
               "Sponsors do not receive private prompts, repos, files, generated outputs, or code.",
-              "Minimal operational data may be stored for abuse prevention, waitlist management, analytics, security, and service improvement.",
+              "Minimal operational data may be stored for abuse prevention, waitlist management, security, and service improvement.",
             ].map((item) => (
               <li key={item} className="flex items-start gap-3 text-sm text-muted">
                 <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-foreground" />

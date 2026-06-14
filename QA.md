@@ -18,7 +18,7 @@ Run before public teaser traffic:
 - [ ] Missing `UPSTASH_REDIS_REST_URL` or `UPSTASH_REDIS_REST_TOKEN` in production returns 503 for submissions.
 - [ ] Missing client IP in production returns 503 and does not bypass rate limiting.
 - [ ] IP rate limit is checked before email rate limit; normalized email rate limit is also enforced after validation.
-- [ ] Admin is hidden in production regardless of `ENABLE_ADMIN`/`ALLOW_UNSAFE_ADMIN`.
+- [ ] Admin is hidden in production regardless of environment variables.
 - [ ] Production `DATABASE_URL` uses pooled Postgres suitable for Vercel/serverless.
 - [ ] `prisma migrate deploy` has been run against production.
 - [ ] No form asks for private prompts, code, repos, files, or generated outputs.

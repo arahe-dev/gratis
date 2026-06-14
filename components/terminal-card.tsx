@@ -139,7 +139,7 @@ export function TerminalCard() {
       </div>
       <div className="min-h-[220px] px-5 py-6 text-sm leading-relaxed sm:px-6 sm:py-8">
         <p className="text-muted">
-          <span className="text-green-500">➜</span> ~/gratis git:(master) cat tasks.md
+          <span className="text-green-500">➜</span> ~/gratis cat tasks.md
         </p>
         <p className="mt-2 font-medium text-foreground" aria-live="polite">
           <span className="text-muted">&gt;</span> {prompt.text}
@@ -156,7 +156,7 @@ export function TerminalCard() {
           Sponsor: {sponsor.text}
           {isSponsorActive && <span className="ml-0.5 inline-block h-3 w-1.5 align-text-bottom animate-pulse bg-foreground/70" />}
         </span>
-        <span className="mt-1 sm:mt-0">Model: deepseek v4 pro</span>
+        <span className="mt-1 sm:mt-0">Model access: sponsored coding compute</span>
       </div>
     </div>
   );

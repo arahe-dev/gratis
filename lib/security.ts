@@ -26,7 +26,3 @@ export async function getClientIp(): Promise<string | null> {
   if (realIp) return realIp;
   return null;
 }
-
-export function coarseMetadata() {
-  return { timestamp: new Date().toISOString() };
-}
