@@ -8,9 +8,9 @@ A pre-launch teaser/waitlist website for **GratisCode**: a sponsored AI coding c
 
 - Next.js App Router (TypeScript)
 - Tailwind CSS
-- Prisma + SQLite (dev/local)
+- Prisma + PostgreSQL
 - Zod validation
-- Simple in-memory rate limiting (swap for Redis in production)
+- Upstash Redis rate limiting in production with local dev fallback
 
 ## Getting started
 
@@ -26,9 +26,11 @@ cp .env.example .env.local
 
 Set:
 
-- `DATABASE_URL` — defaults to `file:./dev.db` for SQLite
-- `IP_HASH_SALT` — long random string for hashing IPs
-- `ADMIN_PASSWORD` — password for the local admin dashboard
+- `DATABASE_URL` — pooled production PostgreSQL connection string suitable for Vercel/serverless (PgBouncer/provider pooler/Prisma Accelerate)
+- `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` — required for production submissions
+- `IP_HASH_SALT` — long random string for hashing IPs; required in production
+- `ENABLE_ADMIN` — leave unset/false for production
+- `ALLOW_UNSAFE_ADMIN` — ignored in production; admin is dev-only until real auth exists
 
 Run the database migration:
 
@@ -46,11 +48,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Database
 
-SQLite is used for local development. To switch to PostgreSQL:
-
-1. Change `provider = "sqlite"` to `provider = "postgresql"` in `prisma/schema.prisma`.
-2. Update `DATABASE_URL` in `.env.local` to a Postgres connection string.
-3. Run `npm run db:migrate`.
+PostgreSQL is configured in `prisma/schema.prisma`. Use `npm run db:migrate` locally and `npm run db:deploy`/`prisma migrate deploy` for production deploys. On Vercel/serverless, `DATABASE_URL` must point at a pooled connection endpoint to avoid exhausting Postgres connections.
 
 ## Forms and API
 
@@ -61,12 +59,13 @@ Both endpoints include:
 
 - Zod validation
 - Honeypot anti-spam field
-- Rate limiting by hashed IP and email
+- API request guards before JSON parsing: `application/json`, required `Content-Length`, and 32KB max body
+- Rate limiting by hashed IP first, then normalized email
 - Privacy-safe logging (no raw IP, no raw UA)
 
 ## Admin dashboard
 
-`/admin` is a simple password-protected dashboard showing counts and recent entries. It is intended for local use only. Protect or disable it before public deployment.
+`/admin` is a simple password-protected dashboard showing counts and recent entries. It is local/dev only until real authentication exists. In production it always returns 404 regardless of env vars.
 
 ## Security headers
 
@@ -78,6 +77,8 @@ Configured in `next.config.ts`:
 - X-Content-Type-Options
 - Permissions-Policy
 - Strict-Transport-Security
+
+CSP tradeoff: production currently allows `script-src 'unsafe-inline'` because Next.js App Router can emit inline bootstrap/flight scripts. This keeps `npm run build && npm start` hydration and forms working. Replace with nonce/hash-based CSP only after end-to-end browser verification.
 
 ## Privacy
 
@@ -104,7 +105,8 @@ This is an estimate, not a guarantee. Actual coverage depends on model prices, t
 2. Import repo in Vercel.
 3. Set environment variables from `.env.example`.
 4. Add build command: `prisma generate && next build` (or use `postinstall`).
-5. For Postgres, set `DATABASE_URL` and update `prisma/schema.prisma`.
+5. Run `prisma migrate deploy` against the production database before accepting submissions.
+6. Use a pooled Postgres connection string for `DATABASE_URL`.
 
 ### Railway / Fly.io
 
@@ -117,8 +119,8 @@ This is an estimate, not a guarantee. Actual coverage depends on model prices, t
 ### General
 
 - [ ] Use a strong `IP_HASH_SALT`.
-- [ ] Rotate `ADMIN_PASSWORD` regularly; do not expose `/admin` publicly.
-- [ ] Swap in-memory rate limiting for Redis in high-traffic scenarios.
+- [ ] Keep `ENABLE_ADMIN` unset/false; production admin returns 404 regardless.
+- [ ] Configure Upstash Redis; production submissions fail closed without it.
 - [ ] Keep dependencies updated.
 - [ ] Review CSP and security headers before going live.
 

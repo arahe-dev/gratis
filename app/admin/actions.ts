@@ -20,7 +20,9 @@ export type AdminDataResult =
     };
 
 export async function getAdminData(password: string): Promise<AdminDataResult> {
-  if (process.env.ENABLE_ADMIN !== "true") {
+  // Local/dev-only dashboard until real authentication exists. It must never be
+  // exposed on public production deployments with password-only protection.
+  if (process.env.NODE_ENV === "production" || process.env.ENABLE_ADMIN !== "true") {
     notFound();
   }
 

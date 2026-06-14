@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sponsorSchema } from "@/lib/validation";
-import { sponsorRateLimit } from "@/lib/rate-limit";
+import { RateLimitBackendError, sponsorEmailRateLimit, sponsorRateLimit } from "@/lib/rate-limit";
 import { getClientIp, hashIp } from "@/lib/security";
 import { isUniqueConstraintError } from "@/lib/db-errors";
+import { parseJsonObject } from "@/lib/request";
 
 export async function POST(request: NextRequest) {
+  const parsedBody = await parseJsonObject(request);
+  if (!parsedBody.ok) return parsedBody.response;
+
   try {
-    const body = await request.json();
+    const body = parsedBody.body;
 
     if (!Object.prototype.hasOwnProperty.call(body, "website")) {
       return NextResponse.json({ error: "Invalid submission." }, { status: 400 });
@@ -27,23 +31,63 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: "Please check the form.", fieldErrors }, { status: 400 });
     }
 
+    const normalizedEmail = parsed.data.email.trim().toLowerCase();
+
     const ip = await getClientIp();
+    if (!ip && process.env.NODE_ENV === "production") {
+      console.error("Sponsor rate limit unavailable:", { time: new Date().toISOString(), reason: "missing-client-ip" });
+      return NextResponse.json(
+        { message: "Submissions are temporarily unavailable. Please try again later." },
+        { status: 503 }
+      );
+    }
+
     const ipHash = hashIp(ip);
 
     if (ipHash) {
-      const { success } = await sponsorRateLimit.limit(ipHash);
+      try {
+        const { success } = await sponsorRateLimit.limit(ipHash);
+        if (!success) {
+          return NextResponse.json(
+            { message: "Too many requests. Please try again later." },
+            { status: 429 }
+          );
+        }
+      } catch (error) {
+        if (error instanceof RateLimitBackendError) {
+          console.error("Sponsor rate limit unavailable:", { time: new Date().toISOString(), type: error.name, reason: error.message });
+          return NextResponse.json(
+            { message: "Submissions are temporarily unavailable. Please try again later." },
+            { status: 503 }
+          );
+        }
+        throw error;
+      }
+    }
+
+    try {
+      const { success } = await sponsorEmailRateLimit.limit(normalizedEmail);
       if (!success) {
         return NextResponse.json(
           { message: "Too many requests. Please try again later." },
           { status: 429 }
         );
       }
+    } catch (error) {
+      if (error instanceof RateLimitBackendError) {
+        console.error("Sponsor email rate limit unavailable:", { time: new Date().toISOString(), type: error.name, reason: error.message });
+        return NextResponse.json(
+          { message: "Submissions are temporarily unavailable. Please try again later." },
+          { status: 503 }
+        );
+      }
+      throw error;
     }
 
     await prisma.sponsorLead.create({
       data: {
         name: parsed.data.name.trim(),
-        email: parsed.data.email.trim().toLowerCase(),
+        email: normalizedEmail,
         company: parsed.data.company.trim(),
         budgetRange: parsed.data.budgetRange,
         targetAudience: parsed.data.targetAudience?.trim() || null,
@@ -62,10 +106,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (isUniqueConstraintError(error)) {
-      return NextResponse.json(
-        { message: "This email has already been submitted." },
-        { status: 409 }
-      );
+      return NextResponse.json({ success: true }, { status: 200 });
     }
 
     return NextResponse.json(

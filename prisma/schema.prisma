@@ -41,7 +41,7 @@ model WaitlistSignup {
 model SponsorLead {
   id             String             @id @default(uuid())
   name           String
-  email          String
+  email          String             @unique
   company        String
   budgetRange    SponsorBudgetRange
   targetAudience String?

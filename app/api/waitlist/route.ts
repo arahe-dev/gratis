@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { waitlistSchema } from "@/lib/validation";
-import { waitlistRateLimit } from "@/lib/rate-limit";
+import { RateLimitBackendError, waitlistEmailRateLimit, waitlistRateLimit } from "@/lib/rate-limit";
 import { getClientIp, hashIp } from "@/lib/security";
 import { isUniqueConstraintError } from "@/lib/db-errors";
+import { parseJsonObject } from "@/lib/request";
 
 export async function POST(request: NextRequest) {
+  const parsedBody = await parseJsonObject(request);
+  if (!parsedBody.ok) return parsedBody.response;
+
   try {
-    const body = await request.json();
+    const body = parsedBody.body;
 
     if (!Object.prototype.hasOwnProperty.call(body, "website")) {
       return NextResponse.json({ error: "Invalid submission." }, { status: 400 });
@@ -27,23 +31,63 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: "Please check the form.", fieldErrors }, { status: 400 });
     }
 
+    const normalizedEmail = parsed.data.email.trim().toLowerCase();
+
     const ip = await getClientIp();
+    if (!ip && process.env.NODE_ENV === "production") {
+      console.error("Waitlist rate limit unavailable:", { time: new Date().toISOString(), reason: "missing-client-ip" });
+      return NextResponse.json(
+        { message: "Submissions are temporarily unavailable. Please try again later." },
+        { status: 503 }
+      );
+    }
+
     const ipHash = hashIp(ip);
 
     if (ipHash) {
-      const { success } = await waitlistRateLimit.limit(ipHash);
+      try {
+        const { success } = await waitlistRateLimit.limit(ipHash);
+        if (!success) {
+          return NextResponse.json(
+            { message: "Too many requests. Please try again later." },
+            { status: 429 }
+          );
+        }
+      } catch (error) {
+        if (error instanceof RateLimitBackendError) {
+          console.error("Waitlist rate limit unavailable:", { time: new Date().toISOString(), type: error.name, reason: error.message });
+          return NextResponse.json(
+            { message: "Submissions are temporarily unavailable. Please try again later." },
+            { status: 503 }
+          );
+        }
+        throw error;
+      }
+    }
+
+    try {
+      const { success } = await waitlistEmailRateLimit.limit(normalizedEmail);
       if (!success) {
         return NextResponse.json(
           { message: "Too many requests. Please try again later." },
           { status: 429 }
         );
       }
+    } catch (error) {
+      if (error instanceof RateLimitBackendError) {
+        console.error("Waitlist email rate limit unavailable:", { time: new Date().toISOString(), type: error.name, reason: error.message });
+        return NextResponse.json(
+          { message: "Submissions are temporarily unavailable. Please try again later." },
+          { status: 503 }
+        );
+      }
+      throw error;
     }
 
     await prisma.waitlistSignup.create({
       data: {
         name: parsed.data.name.trim(),
-        email: parsed.data.email.trim().toLowerCase(),
+        email: normalizedEmail,
         city: parsed.data.city?.trim() || null,
         type: parsed.data.type,
         currentTool: parsed.data.currentTool?.trim() || null,
@@ -62,10 +106,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (isUniqueConstraintError(error)) {
-      return NextResponse.json(
-        { message: "This email is already on the waitlist." },
-        { status: 409 }
-      );
+      return NextResponse.json({ success: true }, { status: 200 });
     }
 
     return NextResponse.json(

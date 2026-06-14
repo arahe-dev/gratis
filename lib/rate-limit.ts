@@ -8,6 +8,13 @@ interface RateLimitResult {
   success: boolean;
 }
 
+export class RateLimitBackendError extends Error {
+  constructor(message = "Rate limiter backend unavailable") {
+    super(message);
+    this.name = "RateLimitBackendError";
+  }
+}
+
 function createDevRatelimit(): { limit: (key: string) => Promise<RateLimitResult> } {
   const store = new Map<string, { count: number; resetAt: number }>();
   const WINDOW_MS = 10 * 60 * 1000;
@@ -35,7 +42,7 @@ function createRatelimit(prefix: string): { limit: (key: string) => Promise<Rate
     if (process.env.NODE_ENV === "production") {
       return {
         async limit(): Promise<RateLimitResult> {
-          throw new Error("Missing UPSTASH_REDIS_REST_URL or UPSTASH_REDIS_REST_TOKEN. Rate limiting requires Upstash Redis in production.");
+          throw new RateLimitBackendError("Missing UPSTASH_REDIS_REST_URL or UPSTASH_REDIS_REST_TOKEN. Rate limiting requires Upstash Redis in production.");
         },
       };
     }
@@ -52,11 +59,17 @@ function createRatelimit(prefix: string): { limit: (key: string) => Promise<Rate
 
   return {
     async limit(key: string): Promise<RateLimitResult> {
-      const { success } = await ratelimit.limit(key);
-      return { success };
+      try {
+        const { success } = await ratelimit.limit(key);
+        return { success };
+      } catch (error) {
+        throw new RateLimitBackendError(error instanceof Error ? error.name : "Unknown rate limiter error");
+      }
     },
   };
 }
 
-export const waitlistRateLimit = createRatelimit("gratiscode:waitlist");
-export const sponsorRateLimit = createRatelimit("gratiscode:sponsor");
+export const waitlistRateLimit = createRatelimit("gratiscode:waitlist:ip");
+export const sponsorRateLimit = createRatelimit("gratiscode:sponsor:ip");
+export const waitlistEmailRateLimit = createRatelimit("gratiscode:waitlist:email");
+export const sponsorEmailRateLimit = createRatelimit("gratiscode:sponsor:email");

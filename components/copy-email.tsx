@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const EMAIL = "usegratiscode@protonmail.com";
 
@@ -9,13 +9,21 @@ type CopyStatus = "idle" | "copied" | "failed";
 export function CopyEmail({ className = "", button = false }: { className?: string; button?: boolean }) {
   const [status, setStatus] = useState<CopyStatus>("idle");
   const [toast, setToast] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
 
   async function copy() {
     try {
       await navigator.clipboard.writeText(EMAIL);
       setStatus("copied");
       setToast(true);
-      setTimeout(() => { setStatus("idle"); setToast(false); }, 2000);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(() => { setStatus("idle"); setToast(false); }, 2000);
     } catch {
       setStatus("failed");
     }

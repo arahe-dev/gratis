@@ -10,19 +10,13 @@ export function useTypewriter(text: string, delay: number) {
     let mounted = true;
     indexRef.current = 0;
 
-    const startTick = () => {
-      if (!mounted) return;
-      setValue("");
-      setDone(false);
-      tick();
-    };
-
     function tick() {
       if (!mounted) return;
       indexRef.current += 1;
+      if (indexRef.current === 1) setDone(false);
       setValue(text.slice(0, indexRef.current));
       if (indexRef.current < text.length) {
-    timeoutRef.current = setTimeout(startTick, delay);
+        timeoutRef.current = setTimeout(tick, delay);
       } else {
         setDone(true);
       }
