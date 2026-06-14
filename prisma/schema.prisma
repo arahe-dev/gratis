@@ -1,13 +1,14 @@
 // GratisCode — Prisma schema
-// SQLite is used for local/dev. Swap `provider = "sqlite"` to "postgresql"
-// and update DATABASE_URL to a Postgres connection string when ready.
+// PostgreSQL is used for production (Vercel Postgres, Neon, Supabase, etc.).
+// Set DATABASE_URL to a Postgres connection string, e.g.:
+// postgresql://user:password@host:5432/db?sslmode=require
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
