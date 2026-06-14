@@ -1,65 +1,156 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import { SiteHeader } from "@/components/site-header";
+import { Footer } from "@/components/footer";
+import { TerminalCard } from "@/components/terminal-card";
+import { SignupModal, type ModalMode } from "@/components/signup-modal";
+import { CopyEmail } from "@/components/copy-email";
+import { Button } from "@/components/ui/button";
 
 export default function Home() {
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<ModalMode>("waitlist");
+
+  function open(mode: ModalMode) {
+    setModalMode(mode);
+    setModalOpen(true);
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+    <>
+      <SiteHeader />
+
+      <main className="flex-1">
+        {/* Hero */}
+        <section className="mx-auto max-w-[1100px] px-6 pb-24 pt-16 sm:pt-24">
+          <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
+            <div>
+              <p className="mb-6 text-sm font-medium uppercase tracking-widest text-muted">
+                Closed access launching soon
+              </p>
+              <h1 className="text-4xl font-bold leading-[1.1] tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+                Premium AI coding models, free for Indian builders.
+              </h1>
+              <p className="mt-6 max-w-lg text-base leading-relaxed text-muted sm:text-lg">
+                GratisCode is a sponsored AI coding client for Indian students, indie hackers, and
+                early-career developers. Sponsor-funded ads cover the model bill so users can focus
+                on shipping.
+              </p>
+              <p className="mt-4 max-w-lg text-sm leading-relaxed text-muted">
+                Ads stay outside prompts, code, repo context, generated output, and model reasoning.
+              </p>
+
+              <CopyEmail button className="mt-6" />
+
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                <Button onClick={() => open("waitlist")}>Register for closed access</Button>
+                <Button variant="secondary" onClick={() => open("sponsor")}>
+                  Sponsor Indian developers
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex items-center">
+              <TerminalCard />
+            </div>
+          </div>
+        </section>
+
+        {/* Sponsor economics */}
+        <section className="border-t border-border bg-[#0e0e0e]">
+          <div className="mx-auto max-w-[1100px] px-6 py-20 sm:py-28">
+            <div className="grid gap-10 lg:grid-cols-2 lg:gap-16">
+              <div>
+                <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+                  Sponsor-funded compute.
+                </h2>
+                <p className="mt-4 text-sm leading-relaxed text-muted sm:text-base">
+                  Sponsors cover the model bill. In return, they get tasteful, context-aware brand
+                  presence in the UI — never inside prompts, code, repo context, generated output,
+                  or model reasoning.
+                </p>
+              </div>
+
+              <div className="rounded-lg border border-border bg-card p-6 sm:p-8">
+                <p className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                  ₹1000
+                </p>
+                <p className="mt-2 text-lg font-medium text-foreground">
+                  can fund up to 4 developer-months
+                </p>
+                <p className="text-sm text-muted">for Indian builders.</p>
+                <p className="mt-4 text-xs leading-relaxed text-muted">
+                  A ₹1000 sponsor pool can fund up to 4 developer-months under the initial target
+                  allowance of roughly ₹250 of model tokens per developer-month.
+                </p>
+                <p className="mt-3 text-xs leading-relaxed text-muted">
+                  Estimate depends on model prices, token mix, sponsor pool size, cache rates, and
+                  availability. Usage is not guaranteed until launch.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Privacy commitment */}
+        <section className="mx-auto max-w-[1100px] px-6 py-20 sm:py-28">
+          <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+            Our commitment to privacy
+          </h2>
+          <ul className="mt-8 grid gap-4 sm:grid-cols-2">
+            {[
+              "We do not inject ads into prompts.",
+              "We do not inject ads into generated code.",
+              "We do not show sponsors your private code.",
+              "Private code and prompts are not used for training without explicit opt-in consent.",
+              "Sponsors do not receive private prompts, repos, files, generated outputs, or code.",
+              "Minimal operational data may be stored for abuse prevention, waitlist management, analytics, security, and service improvement.",
+            ].map((item) => (
+              <li key={item} className="flex items-start gap-3 text-sm text-muted">
+                <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-foreground" />
+                {item}
+              </li>
+            ))}
+          </ul>
+          <div className="mt-8">
+            <Button variant="secondary" href="/privacy">
+              Read full privacy policy
+            </Button>
+          </div>
+        </section>
+
+        {/* Early access */}
+        <section className="border-t border-border bg-[#0e0e0e]">
+          <div className="mx-auto max-w-[1100px] px-6 py-20 sm:py-28">
+            <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+              Early access
+            </h2>
+            <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted sm:text-base">
+              GratisCode is currently pre-launch. Closed access will be given first to students,
+              indie builders, open-source contributors, hackathon teams, and early supporters.
+            </p>
+            <p className="mt-6 text-sm text-muted">
+              Questions? Email <CopyEmail className="inline" />.
+            </p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <Button onClick={() => open("waitlist")}>Register for closed access</Button>
+              <Button variant="secondary" onClick={() => open("sponsor")}>
+                Sponsor Indian developers
+              </Button>
+            </div>
+          </div>
+        </section>
       </main>
-    </div>
+
+      <Footer />
+
+      <SignupModal
+        mode={modalMode}
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSwitchMode={setModalMode}
+      />
+    </>
   );
 }
