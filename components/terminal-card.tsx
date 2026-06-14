@@ -101,31 +101,84 @@ export function TerminalCard() {
   const sponsor = useCycler(sponsorStrings, 35, 18, 3200);
 
   const [visibleTasks, setVisibleTasks] = useState(0);
+  const [tasksVisible, setTasksVisible] = useState(false);
+  const [displayedPromptIndex, setDisplayedPromptIndex] = useState(0);
   const cleanupRef = useRef<(() => void) | null>(null);
 
   const revealTasks = useCallback(() => {
     const tasks = PROMPTS[prompt.index].tasks;
     const ids: ReturnType<typeof setTimeout>[] = [];
     setVisibleTasks(0);
+    setTasksVisible(true);
     tasks.forEach((_, i) => {
-      const id = setTimeout(() => setVisibleTasks((v) => Math.max(v, i + 1)), (i + 1) * (320 + randomInt(-60, 120)));
+      const id = setTimeout(() => {
+        setVisibleTasks((v) => Math.max(v, i + 1));
+      }, 180 + i * (260 + randomInt(-40, 80)));
       ids.push(id);
     });
     return ids;
   }, [prompt.index]);
 
   useEffect(() => {
+    cleanupRef.current?.();
+    cleanupRef.current = null;
+
+    if (prompt.phase === "typing") {
+      const timer = setTimeout(() => {
+        setDisplayedPromptIndex(prompt.index);
+        setTasksVisible(false);
+        setVisibleTasks(0);
+      }, 0);
+      cleanupRef.current = () => clearTimeout(timer);
+      return () => {
+        cleanupRef.current?.();
+        cleanupRef.current = null;
+      };
+    }
+
+    if (prompt.phase === "holding") {
+      const timer = setTimeout(() => {
+        if (prompt.phase !== "holding") return;
+        setDisplayedPromptIndex(prompt.index);
+        setTasksVisible(true);
+        setVisibleTasks(0);
+        const ids = revealTasks();
+        cleanupRef.current = () => ids.forEach(clearTimeout);
+      }, 220);
+      cleanupRef.current = () => clearTimeout(timer);
+      return () => {
+        cleanupRef.current?.();
+        cleanupRef.current = null;
+      };
+    }
+
+    if (prompt.phase === "erasing" || prompt.phase === "idle") {
+      const timer = setTimeout(() => setTasksVisible(false), 0);
+      cleanupRef.current = () => clearTimeout(timer);
+      return () => {
+        cleanupRef.current?.();
+        cleanupRef.current = null;
+      };
+    }
+
+    return undefined;
+  }, [prompt.phase, prompt.index, revealTasks]);
+
+  useEffect(() => {
+    if (tasksVisible || visibleTasks === 0) return;
     const timer = setTimeout(() => {
-      const ids = revealTasks();
-      cleanupRef.current = () => ids.forEach(clearTimeout);
-    }, 0);
+      if (!tasksVisible) setVisibleTasks(0);
+    }, 260);
+    return () => clearTimeout(timer);
+  }, [tasksVisible, visibleTasks]);
+
+  useEffect(() => {
     return () => {
-      clearTimeout(timer);
       cleanupRef.current?.();
     };
-  }, [revealTasks]);
+  }, []);
 
-  const current = PROMPTS[prompt.index];
+  const current = PROMPTS[displayedPromptIndex];
   const isPromptActive = prompt.phase === "typing" || prompt.phase === "holding";
   const isSponsorActive = sponsor.phase === "typing" || sponsor.phase === "holding";
 
@@ -145,9 +198,21 @@ export function TerminalCard() {
           <span className="text-muted">&gt;</span> {prompt.text}
           {isPromptActive && <span className="ml-0.5 inline-block h-4 w-2 align-text-bottom animate-pulse bg-foreground/80" />}
         </p>
-        <div className="mt-4 space-y-1">
-          {current.tasks.slice(0, visibleTasks).map((task) => (
-            <p key={task} className="text-muted">{task}</p>
+        <div
+          className={`mt-4 space-y-1 transition-all duration-300 ease-out ${
+            tasksVisible ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0"
+          }`}
+        >
+          {current.tasks.map((task, index) => (
+            <p
+              key={task}
+              className={`text-muted transition-all duration-500 ease-out ${
+                visibleTasks > index ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0"
+              }`}
+              style={{ transitionDelay: tasksVisible ? `${index * 90}ms` : "0ms" }}
+            >
+              {task}
+            </p>
           ))}
         </div>
       </div>
